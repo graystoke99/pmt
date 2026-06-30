@@ -21,7 +21,7 @@ This directory contains the current frontend-only MVP demo for the project manag
 
 ## Current behavior
 
-- The app currently renders a temporary sign-in gate before showing a single in-memory Kanban board.
+- The app currently renders a temporary sign-in gate before loading a single persisted Kanban board from the backend.
 - The accepted MVP credentials are `user` and `password`.
 - Auth state is stored in browser local storage under `pm-authenticated`.
 - The current demo seed starts with five columns.
@@ -29,11 +29,12 @@ This directory contains the current frontend-only MVP demo for the project manag
 - Cards can be dragged within a column or across columns.
 - Cards can be added from the per-column add form.
 - Cards can be deleted from the board.
-- There is no backend-backed authentication, persistence, or AI chat yet.
+- The board now persists through the FastAPI backend and survives page refresh.
+- There is no backend-backed authentication or AI chat yet.
 
 ## Component structure
 
-- src/components/KanbanBoard.tsx is the stateful top-level client component. It owns board state, drag handling, column rename behavior, add-card behavior, and delete-card behavior.
+- src/components/KanbanBoard.tsx is the stateful top-level client component. It loads the persisted board, drives mutation requests, manages drag handling, and surfaces simple loading and error states.
 - src/components/KanbanColumn.tsx renders a droppable column, the editable column title, the sortable card list, and the new-card form.
 - src/components/KanbanCard.tsx renders a sortable card and its delete action.
 - src/components/KanbanCardPreview.tsx renders the drag overlay preview.
@@ -42,15 +43,17 @@ This directory contains the current frontend-only MVP demo for the project manag
 ## Data model
 
 - src/lib/kanban.ts defines the in-memory board types: Card, Column, and BoardData.
-- initialData is the current demo seed.
-- moveCard handles reordering within a column and moving cards between columns.
-- createId generates client-side IDs for new cards.
+- PersistedBoard represents the backend response shape used by the frontend.
+- initialData still mirrors the seeded backend board for tests and shared assumptions.
+- getCardMoveTarget computes the backend move request payload for drag-and-drop.
+- src/lib/boardApi.ts contains the frontend API client used to load and mutate the board.
 
 ## Testing baseline
 
-- src/components/KanbanBoard.test.tsx covers rendering the seeded columns, renaming a column, and adding/removing a card.
+- src/components/KanbanBoard.test.tsx covers loading the board, renaming a column, adding/removing a card, and backend load failure handling.
 - src/lib/kanban.test.ts covers board utility behavior.
-- tests/kanban.spec.ts covers browser-level rendering, adding a card, and drag-and-drop behavior.
+- src/components/AppShell.test.tsx verifies the temporary sign-in flow with backend-backed board loading.
+- tests/kanban.spec.ts covers browser-level rendering, adding a card, drag-and-drop behavior, and refresh persistence expectations.
 
 ## Implementation constraints for future work
 

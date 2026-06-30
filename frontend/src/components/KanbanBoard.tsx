@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -13,15 +13,19 @@ import {
 } from "@dnd-kit/core";
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
-import { createId, initialData, moveCard, type BoardData } from "@/lib/kanban";
+import { createCard, deleteCard, getBoard, moveCard, updateColumn } from "@/lib/boardApi";
+import { getCardMoveTarget, type PersistedBoard } from "@/lib/kanban";
 
 type KanbanBoardProps = {
   onLogout?: () => void;
 };
 
 export const KanbanBoard = ({ onLogout }: KanbanBoardProps) => {
-  const [board, setBoard] = useState<BoardData>(() => initialData);
+  const [board, setBoard] = useState<PersistedBoard | null>(null);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -29,71 +33,127 @@ export const KanbanBoard = ({ onLogout }: KanbanBoardProps) => {
     })
   );
 
-  const cardsById = useMemo(() => board.cards, [board.cards]);
+  const cardsById = useMemo(() => board?.cards ?? {}, [board]);
+
+  const loadBoard = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      setBoard(await getBoard());
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to load the board right now."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadBoard();
+  }, []);
+
+  const runMutation = async (mutation: () => Promise<PersistedBoard>) => {
+    setIsSaving(true);
+    setError("");
+    try {
+      setBoard(await mutation());
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to save the latest board change."
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveCardId(event.active.id as string);
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveCardId(null);
 
-    if (!over || active.id === over.id) {
+    if (!board || !over || active.id === over.id) {
       return;
     }
 
-    setBoard((prev) => ({
-      ...prev,
-      columns: moveCard(prev.columns, active.id as string, over.id as string),
-    }));
+    const target = getCardMoveTarget(board.columns, active.id as string, over.id as string);
+    if (!target) {
+      return;
+    }
+
+    await runMutation(() =>
+      moveCard(active.id as string, target.targetColumnId, target.targetIndex)
+    );
   };
 
-  const handleRenameColumn = (columnId: string, title: string) => {
-    setBoard((prev) => ({
-      ...prev,
-      columns: prev.columns.map((column) =>
-        column.id === columnId ? { ...column, title } : column
-      ),
-    }));
+  const handleRenameColumn = async (columnId: string, title: string) => {
+    await runMutation(() => updateColumn(columnId, title));
   };
 
-  const handleAddCard = (columnId: string, title: string, details: string) => {
-    const id = createId("card");
-    setBoard((prev) => ({
-      ...prev,
-      cards: {
-        ...prev.cards,
-        [id]: { id, title, details: details || "No details yet." },
-      },
-      columns: prev.columns.map((column) =>
-        column.id === columnId
-          ? { ...column, cardIds: [...column.cardIds, id] }
-          : column
-      ),
-    }));
+  const handleAddCard = async (columnId: string, title: string, details: string) => {
+    await runMutation(() => createCard(columnId, title, details));
   };
 
-  const handleDeleteCard = (columnId: string, cardId: string) => {
-    setBoard((prev) => {
-      return {
-        ...prev,
-        cards: Object.fromEntries(
-          Object.entries(prev.cards).filter(([id]) => id !== cardId)
-        ),
-        columns: prev.columns.map((column) =>
-          column.id === columnId
-            ? {
-                ...column,
-                cardIds: column.cardIds.filter((id) => id !== cardId),
-              }
-            : column
-        ),
-      };
-    });
+  const handleDeleteCard = async (_columnId: string, cardId: string) => {
+    await runMutation(() => deleteCard(cardId));
   };
 
   const activeCard = activeCardId ? cardsById[activeCardId] : null;
+
+  if (isLoading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center px-6 py-12">
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--gray-text)]">
+          Loading board
+        </p>
+      </main>
+    );
+  }
+
+  if (!board) {
+    return (
+      <main className="flex min-h-screen items-center justify-center px-6 py-12">
+        <section className="w-full max-w-xl rounded-[32px] border border-[var(--stroke)] bg-white/85 p-8 shadow-[var(--shadow)] backdrop-blur">
+          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[var(--gray-text)]">
+            Board unavailable
+          </p>
+          <h1 className="mt-4 font-display text-3xl font-semibold text-[var(--navy-dark)]">
+            Kanban Studio
+          </h1>
+          <p className="mt-4 text-sm leading-7 text-[var(--gray-text)]">
+            {error || "The backend could not be reached."}
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                void loadBoard();
+              }}
+              className="rounded-full bg-[var(--secondary-purple)] px-5 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition hover:brightness-110"
+            >
+              Retry
+            </button>
+            {onLogout ? (
+              <button
+                type="button"
+                onClick={onLogout}
+                className="rounded-full border border-[var(--stroke)] px-5 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-[var(--navy-dark)] transition hover:border-[var(--primary-blue)] hover:text-[var(--primary-blue)]"
+              >
+                Log out
+              </button>
+            ) : null}
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <div className="relative overflow-hidden">
@@ -108,7 +168,7 @@ export const KanbanBoard = ({ onLogout }: KanbanBoardProps) => {
                 Single Board Kanban
               </p>
               <h1 className="mt-3 font-display text-4xl font-semibold text-[var(--navy-dark)]">
-                Kanban Studio
+                {board.name}
               </h1>
               <p className="mt-3 max-w-xl text-sm leading-6 text-[var(--gray-text)]">
                 Keep momentum visible. Rename columns, drag cards between stages,
@@ -118,10 +178,12 @@ export const KanbanBoard = ({ onLogout }: KanbanBoardProps) => {
             <div className="flex flex-col gap-4 rounded-2xl border border-[var(--stroke)] bg-[var(--surface)] px-5 py-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--gray-text)]">
-                  Focus
+                  {isSaving ? "Syncing" : "Status"}
                 </p>
                 <p className="mt-2 text-lg font-semibold text-[var(--primary-blue)]">
-                  One board. Flexible columns. Zero clutter.
+                  {isSaving
+                    ? "Saving board changes..."
+                    : "Board changes now persist across refresh."}
                 </p>
               </div>
               {onLogout ? (
@@ -135,6 +197,11 @@ export const KanbanBoard = ({ onLogout }: KanbanBoardProps) => {
               ) : null}
             </div>
           </div>
+          {error ? (
+            <p className="rounded-2xl border border-[rgba(117,57,145,0.18)] bg-[rgba(117,57,145,0.08)] px-4 py-3 text-sm font-medium text-[var(--secondary-purple)]">
+              {error}
+            </p>
+          ) : null}
           <div className="flex flex-wrap items-center gap-4">
             {board.columns.map((column) => (
               <div

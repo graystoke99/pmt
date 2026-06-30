@@ -183,11 +183,11 @@ Goal: replace local in-memory board state with backend-backed persistence.
 
 Checklist:
 
-- [ ] Add frontend API client code for board fetch and board update operations.
-- [ ] Load the signed-in user's board from the backend.
-- [ ] Persist board changes for rename, add, delete, and move operations.
-- [ ] Add loading and error states that stay simple and unobtrusive.
-- [ ] Ensure refresh retains the latest saved board state.
+- [x] Add frontend API client code for board fetch and board update operations.
+- [x] Load the signed-in user's board from the backend.
+- [x] Persist board changes for rename, add, delete, and move operations.
+- [x] Add loading and error states that stay simple and unobtrusive.
+- [x] Ensure refresh retains the latest saved board state.
 
 Tests:
 

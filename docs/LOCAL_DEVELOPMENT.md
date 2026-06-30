@@ -8,6 +8,7 @@ This project currently runs as two containers:
 - Backend at `http://localhost:8000`
 
 The frontend container serves the statically built Next.js export.
+The frontend calls the backend directly at port `8000`, using `NEXT_PUBLIC_API_BASE_URL` when supplied and otherwise deriving `http://<current-host>:8000` in the browser.
 
 ## Start the stack
 
@@ -84,3 +85,8 @@ npm run test:e2e
 - Run `..\.venv\Scripts\python.exe -m pytest` inside `backend/` to execute the backend persistence and API tests.
 - The backend defaults to a SQLite database file at `backend/data/app.db` when run outside Docker.
 - The Docker Compose backend service overrides the database path to `/app/data/app.db` and persists it through the `backend-data` volume.
+
+## Frontend persistence notes
+
+- The frontend no longer uses in-memory board state after sign-in; it loads the board from the backend and persists rename, add, delete, and move operations through the API.
+- If you need to point the frontend at a non-default backend origin in browser-based development, set `NEXT_PUBLIC_API_BASE_URL` before building or running the frontend.

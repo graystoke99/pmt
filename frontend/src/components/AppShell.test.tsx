@@ -1,12 +1,37 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AppShell } from "@/components/AppShell";
+import { initialData } from "@/lib/kanban";
+import * as boardApi from "@/lib/boardApi";
 
 const AUTH_STORAGE_KEY = "pm-authenticated";
+
+vi.mock("@/lib/boardApi", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/boardApi")>("@/lib/boardApi");
+  return {
+    ...actual,
+    getBoard: vi.fn(),
+    updateColumn: vi.fn(),
+    createCard: vi.fn(),
+    deleteCard: vi.fn(),
+    moveCard: vi.fn(),
+  };
+});
+
+const persistedBoard = {
+  id: "board-1",
+  userId: "user-1",
+  name: "Kanban Studio",
+  updatedAt: "2026-06-30T12:00:00Z",
+  ...initialData,
+};
 
 describe("AppShell", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    vi.resetAllMocks();
+    vi.mocked(boardApi.getBoard).mockResolvedValue(persistedBoard);
   });
 
   it("renders the login screen when signed out", async () => {
@@ -26,6 +51,7 @@ describe("AppShell", () => {
     await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
 
     expect(await screen.findAllByTestId(/column-/i)).toHaveLength(5);
+    expect(boardApi.getBoard).toHaveBeenCalled();
     expect(window.localStorage.getItem(AUTH_STORAGE_KEY)).toBe("true");
   });
 

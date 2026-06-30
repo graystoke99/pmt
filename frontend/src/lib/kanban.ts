@@ -15,6 +15,13 @@ export type BoardData = {
   cards: Record<string, Card>;
 };
 
+export type PersistedBoard = BoardData & {
+  id: string;
+  userId: string;
+  name: string;
+  updatedAt: string;
+};
+
 export const initialData: BoardData = {
   columns: [
     { id: "col-backlog", title: "Backlog", cardIds: ["card-1", "card-2"] },
@@ -79,6 +86,58 @@ const findColumnId = (columns: Column[], id: string) => {
     return id;
   }
   return columns.find((column) => column.cardIds.includes(id))?.id;
+};
+
+export const getCardMoveTarget = (
+  columns: Column[],
+  activeId: string,
+  overId: string
+): { targetColumnId: string; targetIndex: number } | null => {
+  const activeColumnId = findColumnId(columns, activeId);
+  const overColumnId = findColumnId(columns, overId);
+
+  if (!activeColumnId || !overColumnId) {
+    return null;
+  }
+
+  const activeColumn = columns.find((column) => column.id === activeColumnId);
+  const overColumn = columns.find((column) => column.id === overColumnId);
+
+  if (!activeColumn || !overColumn) {
+    return null;
+  }
+
+  const overIsColumn = isColumnId(columns, overId);
+
+  if (activeColumnId === overColumnId) {
+    if (overIsColumn) {
+      const nextIndex = activeColumn.cardIds.filter((cardId) => cardId !== activeId).length;
+      return { targetColumnId: activeColumnId, targetIndex: nextIndex };
+    }
+
+    const oldIndex = activeColumn.cardIds.indexOf(activeId);
+    const overIndex = activeColumn.cardIds.indexOf(overId);
+
+    if (oldIndex === -1 || overIndex === -1 || oldIndex === overIndex) {
+      return null;
+    }
+
+    const targetIndex = oldIndex < overIndex ? overIndex : overIndex;
+    return { targetColumnId: activeColumnId, targetIndex };
+  }
+
+  if (overIsColumn) {
+    return {
+      targetColumnId: overColumnId,
+      targetIndex: overColumn.cardIds.length,
+    };
+  }
+
+  const overIndex = overColumn.cardIds.indexOf(overId);
+  return {
+    targetColumnId: overColumnId,
+    targetIndex: overIndex === -1 ? overColumn.cardIds.length : overIndex,
+  };
 };
 
 export const moveCard = (
