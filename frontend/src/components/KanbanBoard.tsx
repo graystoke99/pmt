@@ -121,7 +121,7 @@ export const KanbanBoard = ({ onLogout }: KanbanBoardProps) => {
                   Focus
                 </p>
                 <p className="mt-2 text-lg font-semibold text-[var(--primary-blue)]">
-                  One board. Five columns. Zero clutter.
+                  One board. Flexible columns. Zero clutter.
                 </p>
               </div>
               {onLogout ? (

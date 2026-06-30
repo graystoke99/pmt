@@ -116,17 +116,17 @@ Goal: define the persisted data model and document how JSON board data maps into
 
 Checklist:
 
-- [ ] Propose the SQLite schema for users, board state, and chat history if needed.
-- [ ] Define the JSON board payload shape used by the frontend and AI integration.
-- [ ] Decide whether board state is normalized across tables or persisted as a board JSON document plus metadata.
-- [ ] Document migration and database initialization expectations.
-- [ ] Write the database design doc in docs/.
+- [x] Propose the SQLite schema for users, board state, and chat history if needed.
+- [x] Define the JSON board payload shape used by the frontend and AI integration.
+- [x] Decide whether board state is normalized across tables or persisted as a board JSON document plus metadata.
+- [x] Document migration and database initialization expectations.
+- [x] Write the database design doc in docs/.
 - [ ] Get user sign-off before backend persistence work begins.
 
 Tests:
 
 - Manual schema review for coverage of known requirements.
-- Verify the JSON shape supports column renames, card CRUD, and card moves.
+- Verify the JSON shape supports column CRUD, card CRUD, and card moves.
 
 Success criteria:
 
@@ -146,7 +146,7 @@ Checklist:
 - [ ] Add board-level CRUD endpoints for the signed-in user's board.
 - [ ] Add column CRUD endpoints scoped to the signed-in user's board.
 - [ ] Add card CRUD endpoints scoped to the signed-in user's board.
-- [ ] Support card move operations across columns while preserving fixed column order.
+- [ ] Support card move operations across columns while preserving stored column order.
 - [ ] Decide which operations use full-resource replacement versus targeted patch-style updates, and document that choice in the backend API design.
 - [ ] Add request and response models with validation.
 - [ ] Add backend unit tests for the persistence and API layers.

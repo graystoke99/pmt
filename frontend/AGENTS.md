@@ -21,7 +21,7 @@ This directory contains the current frontend-only MVP demo for the project manag
 ## Current behavior
 
 - The app currently renders a single in-memory Kanban board.
-- The board has five fixed columns.
+- The current demo seed starts with five columns.
 - Column titles can be renamed inline.
 - Cards can be dragged within a column or across columns.
 - Cards can be added from the per-column add form.
@@ -45,7 +45,7 @@ This directory contains the current frontend-only MVP demo for the project manag
 
 ## Testing baseline
 
-- src/components/KanbanBoard.test.tsx covers rendering five columns, renaming a column, and adding/removing a card.
+- src/components/KanbanBoard.test.tsx covers rendering the seeded columns, renaming a column, and adding/removing a card.
 - src/lib/kanban.test.ts covers board utility behavior.
 - tests/kanban.spec.ts covers browser-level rendering, adding a card, and drag-and-drop behavior.
 
