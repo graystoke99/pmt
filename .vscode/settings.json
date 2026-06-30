@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^docker --version$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
