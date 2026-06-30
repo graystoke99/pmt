@@ -91,11 +91,11 @@ Goal: require a simple sign-in gate before the Kanban is shown.
 
 Checklist:
 
-- [ ] Add a login screen shown before access to the board.
-- [ ] Accept only the MVP credentials: user / password.
-- [ ] Store signed-in state using the simplest acceptable temporary approach.
-- [ ] Add a logout flow that clears signed-in state and returns to the login screen.
-- [ ] Prevent unauthenticated access to the board route in the frontend flow.
+- [x] Add a login screen shown before access to the board.
+- [x] Accept only the MVP credentials: user / password.
+- [x] Store signed-in state using the simplest acceptable temporary approach.
+- [x] Add a logout flow that clears signed-in state and returns to the login screen.
+- [x] Prevent unauthenticated access to the board route in the frontend flow.
 
 Tests:
 

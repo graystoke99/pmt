@@ -52,9 +52,16 @@ docker compose down --remove-orphans
 ## Smoke checks
 
 - Open `http://localhost:3000` to confirm the frontend container is reachable.
+- Sign in with username `user` and password `password` to access the board.
 - Open `http://localhost:8000` to confirm the backend hello page renders.
 - The backend root page automatically calls `/api/hello` and renders the API response in the page.
 - Open `http://localhost:8000/api/health` to confirm the backend health response.
+
+## Temporary auth note
+
+- The current sign-in gate is frontend-only and temporary.
+- Signed-in state is stored in browser local storage under the key `pm-authenticated`.
+- This is only for the MVP flow in Part 4 and should be replaced when backend-backed auth is introduced.
 
 ## Frontend test commands
 

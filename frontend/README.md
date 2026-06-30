@@ -7,6 +7,10 @@ npm install
 npm run dev
 ```
 
+Sign in with username `user` and password `password`.
+
+This login is temporary for the MVP. It is enforced in the frontend only, and the signed-in flag is stored in browser local storage under `pm-authenticated`.
+
 ## Static build
 
 ```bash
