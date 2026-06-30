@@ -78,3 +78,9 @@ $env:PLAYWRIGHT_BROWSER_NAME='chromium'
 $env:PLAYWRIGHT_EXECUTABLE_PATH='C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'
 npm run test:e2e
 ```
+
+## Backend test commands
+
+- Run `..\.venv\Scripts\python.exe -m pytest` inside `backend/` to execute the backend persistence and API tests.
+- The backend defaults to a SQLite database file at `backend/data/app.db` when run outside Docker.
+- The Docker Compose backend service overrides the database path to `/app/data/app.db` and persists it through the `backend-data` volume.

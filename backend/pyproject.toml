@@ -5,7 +5,14 @@ description = "FastAPI backend for the project management MVP"
 requires-python = ">=3.12"
 dependencies = [
   "fastapi>=0.116.1,<1.0.0",
+  "pydantic>=2.11.7,<3.0.0",
   "uvicorn[standard]>=0.35.0,<1.0.0",
+]
+
+[dependency-groups]
+dev = [
+  "httpx>=0.28.1,<1.0.0",
+  "pytest>=8.4.2,<9.0.0",
 ]
 
 [tool.uv]

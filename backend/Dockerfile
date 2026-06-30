@@ -6,6 +6,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 RUN pip install --no-cache-dir uv
+RUN mkdir -p /app/data
 
 COPY pyproject.toml ./
 RUN uv sync --no-dev

@@ -1,25 +1,27 @@
-from fastapi import FastAPI
+from contextlib import asynccontextmanager
+
+from fastapi import Depends, FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 
-
-app = FastAPI(title="Project Management MVP Backend")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+from app.config import Settings, get_settings
+from app.db import Database
+from app.schemas import (
+  BoardCreateRequest,
+  BoardMoveCardRequest,
+  BoardReplaceRequest,
+  BoardResponse,
+  CardCreateRequest,
+  CardUpdateRequest,
+  ColumnCreateRequest,
+  ColumnUpdateRequest,
+  HealthResponse,
 )
+from app.service import BoardService, BoardValidationError, NotFoundError
 
 
-@app.get("/", response_class=HTMLResponse)
-def read_root() -> str:
-    return """
+def build_root_html() -> str:
+  return """
 <!doctype html>
 <html lang=\"en\">
   <head>
@@ -95,14 +97,135 @@ def read_root() -> str:
 """
 
 
-@app.get("/api/health")
-def read_health() -> dict[str, str]:
-    return {"status": "ok", "service": "backend"}
+def create_app(settings: Settings | None = None) -> FastAPI:
+  resolved_settings = settings or get_settings()
+  database = Database(resolved_settings.database_path)
 
+  @asynccontextmanager
+  async def lifespan(_: FastAPI):
+    database.initialize()
+    yield
 
-@app.get("/api/hello")
-def read_hello() -> dict[str, str]:
+  app = FastAPI(title=resolved_settings.app_name, lifespan=lifespan)
+  app.state.settings = resolved_settings
+  app.state.database = database
+
+  app.add_middleware(
+    CORSMiddleware,
+    allow_origins=resolved_settings.allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+  )
+
+  def get_service() -> BoardService:
+    return BoardService(database)
+
+  @app.get("/", response_class=HTMLResponse)
+  def read_root() -> str:
+    return build_root_html()
+
+  @app.get("/api/health", response_model=HealthResponse)
+  def read_health() -> HealthResponse:
+    return HealthResponse(status="ok", service="backend")
+
+  @app.get("/api/hello")
+  def read_hello() -> dict[str, str]:
     return {
-        "message": "Hello world from the backend API.",
-        "service": "backend",
+      "message": "Hello world from the backend API.",
+      "service": "backend",
     }
+
+  @app.get("/api/board", response_model=BoardResponse)
+  def read_board(service: BoardService = Depends(get_service)) -> BoardResponse:
+    return service.get_board()
+
+  @app.post("/api/board", response_model=BoardResponse, status_code=status.HTTP_201_CREATED)
+  def create_board(
+    request: BoardCreateRequest,
+    service: BoardService = Depends(get_service),
+  ) -> BoardResponse:
+    return service.create_board(request)
+
+  @app.put("/api/board", response_model=BoardResponse)
+  def replace_board(
+    request: BoardReplaceRequest,
+    service: BoardService = Depends(get_service),
+  ) -> BoardResponse:
+    return service.replace_board(request)
+
+  @app.delete("/api/board", status_code=status.HTTP_204_NO_CONTENT)
+  def delete_board(service: BoardService = Depends(get_service)) -> Response:
+    service.delete_board()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+  @app.post("/api/columns", response_model=BoardResponse, status_code=status.HTTP_201_CREATED)
+  def create_column(
+    request: ColumnCreateRequest,
+    service: BoardService = Depends(get_service),
+  ) -> BoardResponse:
+    return service.create_column(request)
+
+  @app.patch("/api/columns/{column_id}", response_model=BoardResponse)
+  def update_column(
+    column_id: str,
+    request: ColumnUpdateRequest,
+    service: BoardService = Depends(get_service),
+  ) -> BoardResponse:
+    return service.update_column(column_id, request)
+
+  @app.delete("/api/columns/{column_id}", response_model=BoardResponse)
+  def delete_column(
+    column_id: str,
+    service: BoardService = Depends(get_service),
+  ) -> BoardResponse:
+    return service.delete_column(column_id)
+
+  @app.post("/api/cards", response_model=BoardResponse, status_code=status.HTTP_201_CREATED)
+  def create_card(
+    request: CardCreateRequest,
+    service: BoardService = Depends(get_service),
+  ) -> BoardResponse:
+    return service.create_card(request)
+
+  @app.patch("/api/cards/{card_id}", response_model=BoardResponse)
+  def update_card(
+    card_id: str,
+    request: CardUpdateRequest,
+    service: BoardService = Depends(get_service),
+  ) -> BoardResponse:
+    return service.update_card(card_id, request)
+
+  @app.delete("/api/cards/{card_id}", response_model=BoardResponse)
+  def delete_card(
+    card_id: str,
+    service: BoardService = Depends(get_service),
+  ) -> BoardResponse:
+    return service.delete_card(card_id)
+
+  @app.post("/api/cards/{card_id}/move", response_model=BoardResponse)
+  def move_card(
+    card_id: str,
+    request: BoardMoveCardRequest,
+    service: BoardService = Depends(get_service),
+  ) -> BoardResponse:
+    return service.move_card(card_id, request)
+
+  @app.exception_handler(NotFoundError)
+  async def handle_not_found(_: Request, exc: NotFoundError) -> JSONResponse:
+    return JSONResponse(
+      status_code=status.HTTP_404_NOT_FOUND,
+      content={"detail": str(exc)},
+    )
+
+  @app.exception_handler(BoardValidationError)
+  async def handle_board_validation(_: Request, exc: BoardValidationError) -> JSONResponse:
+    return JSONResponse(
+      status_code=status.HTTP_409_CONFLICT,
+      content={"detail": str(exc)},
+    )
+
+  return app
+
+
+app = create_app()

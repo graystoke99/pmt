@@ -140,17 +140,17 @@ Goal: implement persistent board APIs on FastAPI backed by SQLite.
 
 Checklist:
 
-- [ ] Add backend configuration loading, including database path and environment variables.
-- [ ] Persist the SQLite file outside the container layer so local data survives container recreation.
-- [ ] Create database initialization on startup if the SQLite file does not exist.
-- [ ] Seed the default user and an initial board where needed.
-- [ ] Add board-level CRUD endpoints for the signed-in user's board.
-- [ ] Add column CRUD endpoints scoped to the signed-in user's board.
-- [ ] Add card CRUD endpoints scoped to the signed-in user's board.
-- [ ] Support card move operations across columns while preserving stored column order.
-- [ ] Decide which operations use full-resource replacement versus targeted patch-style updates, and document that choice in the backend API design.
-- [ ] Add request and response models with validation.
-- [ ] Add backend unit tests for the persistence and API layers.
+- [x] Add backend configuration loading, including database path and environment variables.
+- [x] Persist the SQLite file outside the container layer so local data survives container recreation.
+- [x] Create database initialization on startup if the SQLite file does not exist.
+- [x] Seed the default user and an initial board where needed.
+- [x] Add board-level CRUD endpoints for the signed-in user's board.
+- [x] Add column CRUD endpoints scoped to the signed-in user's board.
+- [x] Add card CRUD endpoints scoped to the signed-in user's board.
+- [x] Support card move operations across columns while preserving stored column order.
+- [x] Decide which operations use full-resource replacement versus targeted patch-style updates, and document that choice in the backend API design.
+- [x] Add request and response models with validation.
+- [x] Add backend unit tests for the persistence and API layers.
 
 Implementation notes:
 
