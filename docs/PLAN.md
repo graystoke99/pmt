@@ -66,11 +66,11 @@ Goal: wire the existing demo frontend into the project runtime without changing 
 
 Checklist:
 
-- [ ] Ensure the current Next.js app builds cleanly for containerized local use.
-- [ ] Make the frontend container serve the current Kanban demo at /.
-- [ ] Preserve existing drag-and-drop, rename, add-card, and delete-card behavior.
-- [ ] Verify the current visual styling survives the containerized setup.
-- [ ] Keep or tighten the current unit and e2e test coverage for the demo behavior.
+- [x] Ensure the current Next.js app builds cleanly for containerized local use.
+- [x] Make the frontend container serve the current statically built Kanban demo at /.
+- [x] Preserve existing drag-and-drop, rename, add-card, and delete-card behavior.
+- [x] Verify the current visual styling survives the static export setup.
+- [x] Keep or tighten the current unit and e2e test coverage for the demo behavior.
 
 Tests:
 

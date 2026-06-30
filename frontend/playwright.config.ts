@@ -1,5 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const browserName = process.env.PLAYWRIGHT_BROWSER_NAME ?? "chromium";
+const executablePath = process.env.PLAYWRIGHT_EXECUTABLE_PATH;
+
+const projectDevice =
+  browserName === "firefox" ? devices["Desktop Firefox"] : devices["Desktop Chrome"];
+
 export default defineConfig({
   testDir: "./tests",
   timeout: 60_000,
@@ -11,15 +17,25 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   webServer: {
-    command: "npm run dev -- --hostname 127.0.0.1 --port 3000",
+    command: "npm run build && npm run serve:static",
     url: "http://127.0.0.1:3000",
     reuseExistingServer: true,
     timeout: 120_000,
   },
   projects: [
     {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      name: browserName,
+      use: {
+        ...projectDevice,
+        browserName: browserName as "chromium" | "firefox" | "webkit",
+        ...(executablePath
+          ? {
+              launchOptions: {
+                executablePath,
+              },
+            }
+          : {}),
+      },
     },
   ],
 });
