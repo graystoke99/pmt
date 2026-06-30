@@ -14,19 +14,22 @@ This directory contains the current frontend-only MVP demo for the project manag
 
 ## Current entry points
 
-- src/app/page.tsx renders the Kanban board directly at /.
+- src/app/page.tsx renders AppShell at /.
 - src/app/layout.tsx sets global fonts, metadata, and shared layout shell.
 - src/app/globals.css defines the core color variables and global styling primitives.
+- src/components/AppShell.tsx owns the temporary sign-in gate and switches between the login view and the board.
 
 ## Current behavior
 
-- The app currently renders a single in-memory Kanban board.
+- The app currently renders a temporary sign-in gate before showing a single in-memory Kanban board.
+- The accepted MVP credentials are `user` and `password`.
+- Auth state is stored in browser local storage under `pm-authenticated`.
 - The current demo seed starts with five columns.
 - Column titles can be renamed inline.
 - Cards can be dragged within a column or across columns.
 - Cards can be added from the per-column add form.
 - Cards can be deleted from the board.
-- There is no authentication, backend integration, persistence, or AI chat yet.
+- There is no backend-backed authentication, persistence, or AI chat yet.
 
 ## Component structure
 

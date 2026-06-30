@@ -121,7 +121,7 @@ Checklist:
 - [x] Decide whether board state is normalized across tables or persisted as a board JSON document plus metadata.
 - [x] Document migration and database initialization expectations.
 - [x] Write the database design doc in docs/.
-- [ ] Get user sign-off before backend persistence work begins.
+- [x] Get user sign-off before backend persistence work begins.
 
 Tests:
 
@@ -141,6 +141,7 @@ Goal: implement persistent board APIs on FastAPI backed by SQLite.
 Checklist:
 
 - [ ] Add backend configuration loading, including database path and environment variables.
+- [ ] Persist the SQLite file outside the container layer so local data survives container recreation.
 - [ ] Create database initialization on startup if the SQLite file does not exist.
 - [ ] Seed the default user and an initial board where needed.
 - [ ] Add board-level CRUD endpoints for the signed-in user's board.
@@ -150,6 +151,14 @@ Checklist:
 - [ ] Decide which operations use full-resource replacement versus targeted patch-style updates, and document that choice in the backend API design.
 - [ ] Add request and response models with validation.
 - [ ] Add backend unit tests for the persistence and API layers.
+
+Implementation notes:
+
+- Keep MVP backend user resolution simple: Part 6 should operate on the seeded `user` account until backend-backed auth is introduced later.
+- Store the canonical board state in `boards.board_json` and apply all column and card operations by loading, mutating, validating, and rewriting that single document.
+- Prefer targeted resource endpoints for frontend ergonomics, while still performing full-document writes internally.
+- Recommended initial endpoint set: `GET /api/board`, `POST /api/columns`, `PATCH /api/columns/{columnId}`, `DELETE /api/columns/{columnId}`, `POST /api/cards`, `PATCH /api/cards/{cardId}`, `DELETE /api/cards/{cardId}`, and `POST /api/cards/{cardId}/move`.
+- Default the SQLite path to an app-local data directory such as `/app/data/app.db`, with an overrideable environment variable for local and container use.
 
 Tests:
 

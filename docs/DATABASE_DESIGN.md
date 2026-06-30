@@ -258,6 +258,37 @@ Examples:
 - add card: load board document, add card object, append card ID to one column, save document
 - move card: load board document, update source and destination `cardIds`, save document
 
+## Recommended Part 6 endpoint style
+
+Use targeted endpoints for column and card actions, but treat each write as a full board-document rewrite in the persistence layer.
+
+Recommended MVP endpoints:
+
+- `GET /api/board` returns the seeded user's board payload
+- `POST /api/columns` creates a column and returns the updated board
+- `PATCH /api/columns/{columnId}` renames a column and returns the updated board
+- `DELETE /api/columns/{columnId}` deletes a column and returns the updated board
+- `POST /api/cards` creates a card in a target column and returns the updated board
+- `PATCH /api/cards/{cardId}` updates card fields and returns the updated board
+- `DELETE /api/cards/{cardId}` deletes a card and returns the updated board
+- `POST /api/cards/{cardId}/move` moves a card and returns the updated board
+
+Why this is the right Part 6 tradeoff:
+
+- the frontend can call direct, intention-revealing endpoints instead of sending whole-board replacements for every interaction
+- the backend keeps persistence simple because it only needs to validate and rewrite one JSON document per update
+- the response shape can stay consistent by returning the full board after each mutation
+
+## Local persistence note for Docker
+
+If SQLite is stored only inside the backend container filesystem, data will be lost when that container is recreated.
+
+For Part 6, the backend should therefore:
+
+- default the database path to a writable app-local directory such as `/app/data/app.db`
+- allow that path to be overridden by environment variable
+- mount that directory from Compose using a named volume or bind mount so local persistence survives container recreation
+
 ## Important MVP constraint
 
 The product decision is now that column count is not fixed per user.
